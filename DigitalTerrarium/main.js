@@ -4,6 +4,7 @@ import './style.css'
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {background, background_animate} from './background.js';
 
 // --------------------------
 // General scene set-up
@@ -12,6 +13,7 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 const scene = new THREE.Scene(); // Initialize our scene
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // Establish camera perspective, the screen
 
+// Initialize Renderer
 const renderer = new THREE.WebGLRenderer(
   {
     canvas: document.querySelector('#bg') // Render background
@@ -23,12 +25,8 @@ renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 camera.position.set(0, 10, 30);
 
-renderer.render(scene, camera); // Render screen initial background
-
-
-// Create texturized background
-const backgroundTexture = new THREE.TextureLoader().load('./images/bamboo.jpg');
-scene.background = backgroundTexture;
+// Set background from background.js
+scene.background = background;
 
 // Enable user controls for the camera view
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -45,9 +43,9 @@ const ambientLight = new THREE.AmbientLight(0xffffff);
 scene.add(pointLight, ambientLight);
 
 // Point light helper
-const lightHelper = new THREE.PointLightHelper(pointLight);
+//const lightHelper = new THREE.PointLightHelper(pointLight);
 //const gridHelper = new THREE.GridHelper(200, 50);
-scene.add(lightHelper);
+//scene.add(lightHelper);
 
 
 // --------------------------
@@ -129,63 +127,24 @@ loader.load("./models/smallRocks.gltf", function (gltf) {
   scene.add(rocks);
 });
 
-
-/*
-// Model Loader
-/*
-function loadModel(m_name)
-{
-  const loader = new GLTFLoader();
-  loader.load(m_name, (gltf) => {
-    gltf.scene.traverse(c => {
-      c.castShadow = true;
-    });
-    gltf.scene.rotation.y = Math.PI/3; // Rotate around x-axis by 90 degrees
-    scene.add(gltf.scene);
-  });
-}
-
-// Load complete model
-loadModel("./models/treeBase.gltf"); // Tree base
-loadModel("./models/treeLeaves.gltf"); // Tree leaves
-loadModel("./models/floatingIsland.gltf"); // Floating Island
-loadModel("./models/rockPool.gltf"); // Rock pool
-loadModel("./models/smallRocks.gltf"); // Small rocks
-loadModel("./models/bushes.gltf"); // Bushes
-loadModel("./models/water.gltf"); // Water
-*/
-
 // --------------------------
-// Additional Scene Effects
+// Animate Scene Elements
 // --------------------------
 
-/*
-// Populate background with random cherry blossoms
-// Idea: have the petals float across the screen
-function addPetal() 
-{
-  const geometry = new THREE.SphereGeometry(0.25, 24, 24);
-  const material = new THREE.MeshStandardMaterial({color: 0xF8C8DC});
-  const star = new THREE.Mesh(geometry, material);
 
-  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(100));
-  star.position.set(x,y,z);
-  scene.add(star);
-}
-// Add 200 petals
-Array(200).fill().forEach(addPetal);
-*/
-
-
-// Animate function for our torus shape
+// Animate function for our background and controls
 function animate()
 {
   requestAnimationFrame(animate); // Tells browser to animate the screen
 
+  // Update background animation
+  background_animate(background);
+
   // Enable controls to update screen view
   controls.update();
 
-  renderer.render(scene, camera); // Render to screen
+  // Render to screen
+  renderer.render(scene, camera);
 }
 
 animate();
