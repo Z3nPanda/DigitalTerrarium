@@ -1,4 +1,4 @@
-// Credit tutorial (https://www.youtube.com/watch?v=Q7AOvWpIVHU) for initial set-up
+// Main scene
 
 import './style.css'
 import * as THREE from 'three';
@@ -30,6 +30,7 @@ scene.background = background;
 
 // Enable user controls for the camera view
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.enablePan = false;
 
 // --------------------------
 // Lighting Initializer 
@@ -37,10 +38,13 @@ const controls = new OrbitControls(camera, renderer.domElement);
 
 // Create a point light
 const pointLight = new THREE.PointLight(0xffffff);
+pointLight.intensity = 1;
 pointLight.position.set(-10, 25, 25);
 // Create ambient lighting
-const ambientLight = new THREE.AmbientLight(0xffffff);
+const ambientLight = new THREE.AmbientLight(0x606060);
+ambientLight.intensity = 0.25;
 scene.add(pointLight, ambientLight);
+scene.add(pointLight);
 
 // Point light helper
 //const lightHelper = new THREE.PointLightHelper(pointLight);
@@ -48,67 +52,193 @@ scene.add(pointLight, ambientLight);
 //scene.add(lightHelper);
 
 
+// Update light function
+function updateLight(color) {
+  // Determine the light color based on the color of the middle pixel on the screen
+  const light_color = new THREE.Color(color);
+  console.log(color)
+  pointLight.color = light_color;
+}
+
+
 // --------------------------
-// Load complete model Assets
+// Terrarium model Assets
 // --------------------------
 const loader = new GLTFLoader();
+const textureLoader = new THREE.TextureLoader();
 
-// Load floating island
+// Floating island textures
+const islandBaseColor = textureLoader.load('./textures/island/frozenIce.jpg');
+const islandNormal = textureLoader.load('./textures/island/Rock_047_Normal.jpg');
+const islandRough = textureLoader.load('./textures/island/Rock_047_Roughness.jpg');
+
+// Load floating island model
 var island;
 loader.load("./models/floatingIsland.gltf", function (gltf) {
-  gltf.scene.traverse(c => {
-    c.castShadow = true;
+  // Rotate around x-axis by 90 degrees for initial view
+  gltf.scene.rotation.y = Math.PI/3;
+  
+  // Create the island material from our textures 
+  const islandMaterial = new THREE.MeshStandardMaterial({
+    map: islandBaseColor,
+    normalMap: islandNormal,
+    roughnessMap: islandRough,
+    roughness: 1,
   });
-  gltf.scene.rotation.y = Math.PI/3; // Rotate around x-axis by 90 degrees
+
+  // Loop through the children of the gltf.scene to apply mesh textures
+  gltf.scene.traverse(child => {
+    if (child.isMesh) {
+      // Assign the islandMaterial to the mesh and enable shadows
+      child.material = islandMaterial;
+      child.castShadow = true;
+      // Clone the uv attribute and assign it to uv2
+      child.geometry.setAttribute('uv2', child.geometry.attributes.uv.clone());
+    }
+  });
+  
+  // Add model to scene
   island = gltf.scene;
   scene.add(island);
 });
 
+// Tree textures
+const treeBaseColor = textureLoader.load('./textures/tree/Bark_06_basecolor.jpg');
+const treeNormal = textureLoader.load('./textures/tree/Bark_06_normal.jpg');
+const treeRough = textureLoader.load('./textures/tree/Bark_06_roughness.jpg');
+
+// Tree foliage textures
+const foliageBaseColor = textureLoader.load('./textures/leaves/snow_003_COLOR.jpg');
+const foliageNormal = textureLoader.load('./textures/leaves/snow_003_COLOR.jpg');
+
 // Load tree model
-var treeBase, treeLeaves;
+var treeBase, treeFoliage;
 // Tree base
 loader.load("./models/treeBase.gltf", function (gltf) {
-  gltf.scene.traverse(c => {
-    c.castShadow = true;
+  // Rotate around x-axis by 90 degrees for initial view
+  gltf.scene.rotation.y = Math.PI/3;
+
+  // Create the tree material from our textures 
+  const treeMaterial = new THREE.MeshStandardMaterial({
+    map: treeBaseColor,
+    normalMap: treeNormal,
+    roughnessMap: treeRough,
+    roughness: 0.5,
   });
-  gltf.scene.rotation.y = Math.PI/3; // Rotate around x-axis by 90 degrees
+
+  // Loop through the children of the gltf.scene to apply mesh textures
+  gltf.scene.traverse(child => {
+    if (child.isMesh) {
+      // Assign the treeMaterial to the mesh and enable shadows
+      child.material = treeMaterial;
+      child.castShadow = true;
+    }
+  });
+
+  // Add tree to scene
   treeBase = gltf.scene;
   scene.add(treeBase);
 });
-// Tree Leaves
+// Tree foliage
 loader.load("./models/treeLeaves.gltf", function (gltf) {
-  gltf.scene.traverse(c => {
-    c.castShadow = true;
+  // Rotate around x-axis by 90 degrees for initial view
+  gltf.scene.rotation.y = Math.PI/3;
+
+  // Create the foliage material from our textures 
+  const foliageMaterial = new THREE.MeshStandardMaterial({
+    map: foliageBaseColor,
+    normalMap: foliageNormal,
   });
-  gltf.scene.rotation.y = Math.PI/3; // Rotate around x-axis by 90 degrees
-  treeLeaves = gltf.scene;
-  scene.add(treeLeaves);
+
+  // Loop through the children of the gltf.scene to apply mesh textures
+  gltf.scene.traverse(child => {
+    var count = 0
+    if (child.isMesh) {
+      console.log(count)
+      // Assign the treeMaterial to the mesh and enable shadows
+      child.material = foliageMaterial;
+      child.castShadow = true;
+      count += 1
+    }
+  });
+
+  // Add tree to scene
+  treeFoliage = gltf.scene;
+  scene.add(treeFoliage);
 });
+
+// Rock pool textures
+const rockPoolBaseColor = textureLoader.load('./textures/rockPool/stonePoolBase.jpg');
+const rockPoolNormal = textureLoader.load('./textures/rockPool/Rock_044_Normal.jpg');
+const rockPoolRough = textureLoader.load('./textures/rockPool/Rock_044_Roughness.jpg');
+
+// water textures
+const waterBaseColor = textureLoader.load('./textures/water/Water_002_COLOR.jpg');
+const waterNormal = textureLoader.load('./textures/water/Water_002_NORM.jpg');
+const waterRough = textureLoader.load('./textures/water/Water_002_ROUGH.jpg');
+const waterDisp = textureLoader.load('./textures/water/Water_002_DISP.png');
 
 // Load hotsprings rock pool
 var rockPool, water;
 // Rock Pool
 loader.load("./models/rockPool.gltf", function (gltf) {
-  gltf.scene.traverse(c => {
-    c.castShadow = true;
+  // Rotate around x-axis by 90 degrees for initial view
+  gltf.scene.rotation.y = Math.PI/3;
+
+  // Create the tree material from our textures 
+  const rockPoolMaterial = new THREE.MeshStandardMaterial({
+    map: rockPoolBaseColor,
+    normalMap: rockPoolNormal,
+    roughnessMap: rockPoolRough,
+    roughness: 1,
   });
-  gltf.scene.rotation.y = Math.PI/3; // Rotate around x-axis by 90 degrees
+
+  // Loop through the children of the gltf.scene to apply mesh textures
+  gltf.scene.traverse(child => {
+    if (child.isMesh) {
+      // Assign the treeMaterial to the mesh and enable shadows
+      child.material = rockPoolMaterial;
+      child.castShadow = true;
+    }
+  });
+
+  // Add rockPool to scene
   rockPool = gltf.scene;
   scene.add(rockPool);
 });
+
 // Water
 loader.load("./models/water.gltf", function (gltf) {
-  gltf.scene.traverse(c => {
-    c.castShadow = true;
+  // Rotate around x-axis by 90 degrees for initial view
+  gltf.scene.rotation.y = Math.PI/3;
+
+  // Create the water material from our textures 
+  const waterMaterial = new THREE.MeshStandardMaterial({
+    map: waterBaseColor,
+    normalMap: waterNormal,
+    roughnessMap: waterRough,
+    roughness: 0.75,
+    displacementMap: waterDisp,
+    displacementScale: 0.024,
   });
-  gltf.scene.rotation.y = Math.PI/3; // Rotate around x-axis by 90 degrees
+
+  // Loop through the children of the gltf.scene to apply mesh textures
+  gltf.scene.traverse(child => {
+    if (child.isMesh) {
+      // Assign the treeMaterial to the mesh and enable shadows
+      child.material = waterMaterial;
+      child.castShadow = true;
+    }
+  });
+
+  // Add water to scene
   water = gltf.scene;
   scene.add(water);
 });
 
 // Misc details
 var bushes, rocks;
-// Bushes
+// Rocks that originally would have been bushes but look better as rocks
 loader.load("./models/bushes.gltf", function (gltf) {
   gltf.scene.traverse(c => {
     c.castShadow = true;
@@ -128,6 +258,29 @@ loader.load("./models/smallRocks.gltf", function (gltf) {
 });
 
 // --------------------------
+// Additional Scene Effects
+// --------------------------
+
+
+// Populate background with snow fall
+function addSnow() 
+{
+  const geometry = new THREE.SphereGeometry(0.25, 16, 16);
+  const material = new THREE.MeshStandardMaterial({color: 0xFFFFFF});
+  const snow = new THREE.Mesh(geometry, material);
+
+  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(100));
+  snow.position.set(x,y,z);
+  scene.add(snow);
+
+  // Random fall speed for each snowflake
+  snow.speed = THREE.MathUtils.randFloat(0.05, 0.1); 
+}
+// Add 200 petals
+Array(250).fill().forEach(addSnow);
+
+
+// --------------------------
 // Animate Scene Elements
 // --------------------------
 
@@ -140,11 +293,26 @@ function animate()
   // Update background animation
   background_animate(background);
 
+  // Update snow animation
+  scene.children.forEach(child => {
+    if (child.isMesh) {
+      // Update snowflake position by its speed factor
+      child.position.y -= child.speed;
+      // If snowflake goes below the ground, reset position to the top
+      if (child.position.y < -50) {
+        child.position.y = THREE.MathUtils.randFloat(50, 100);
+      }
+    }
+  });
+
+  // Update lighting effect
+  // updateLight();
+
   // Enable controls to update screen view
   controls.update();
 
   // Render to screen
   renderer.render(scene, camera);
 }
-
+export const updtLight = updateLight;
 animate();

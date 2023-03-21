@@ -1,0 +1,5 @@
+1. Make the light travel along an elliptical path to simulate sun rise and fall 
+2. Make light intensity reflect background state for daylight and moonlight
+3. Texture materials with normal map then texture image 
+4. Transparent water, maybe make it ripple
+5. Snowfall
